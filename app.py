@@ -59,6 +59,10 @@ def boost_worker(config):
     
     boost_status["running"] = False
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy", "message": "Insta-Booster is running"})
+
 @app.route('/')
 def index():
     config = load_config()
