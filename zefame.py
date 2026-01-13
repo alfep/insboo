@@ -4,7 +4,12 @@ import uuid
 class Zefame:
     def __init__(self, url_video,service_id):
         self.url_video = url_video
-        self.url = "https://zefame-free.com/api_free.php?action=order"
+        # Try different endpoints
+        self.endpoints = [
+            "https://zefame-free.com/api_free.php?action=order",
+            "https://zefame.com/api_free.php?action=order",
+            "https://api.zefame.com/free?action=order"
+        ]
         self.uuid = str(uuid.uuid4())
         
         # Extract reel ID safely
@@ -43,27 +48,31 @@ class Zefame:
         self.session = requests.session()
 
     def send_boost(self):
-        try:
-            print(f"Sending request to: {self.url}")
-            print(f"Data: {self.data}")
-            
-            response = self.session.post(self.url, data=self.data, headers=self.headers, timeout=15)
-            print(f"Response status: {response.status_code}")
-            print(f"Response text: {response.text[:500]}")
-            
-            if response.status_code == 200:
-                resp_json = response.json()
-                print(f"Response JSON: {resp_json}")
+        # Try different endpoints
+        for endpoint in self.endpoints:
+            try:
+                print(f"Trying endpoint: {endpoint}")
+                response = self.session.post(endpoint, data=self.data, headers=self.headers, timeout=15)
+                print(f"Response status: {response.status_code}")
                 
-                if resp_json.get('success') == True:
-                    return True
-                elif (
-                    isinstance(resp_json.get('data'), dict) and
-                    resp_json['data'].get('timeLeft') is not None
-                ):
-                    return resp_json['data']['timeLeft']
-                else:
-                    return False
-        except Exception as e:
-            print("Error:", e)
+                if response.status_code == 200:
+                    try:
+                        resp_json = response.json()
+                        print(f"Response JSON: {resp_json}")
+                        
+                        if resp_json.get('success') == True:
+                            return True
+                        elif (
+                            isinstance(resp_json.get('data'), dict) and
+                            resp_json['data'].get('timeLeft') is not None
+                        ):
+                            return resp_json['data']['timeLeft']
+                    except:
+                        print(f"Non-JSON response: {response.text[:200]}")
+                        
+            except Exception as e:
+                print(f"Error with {endpoint}: {e}")
+                continue
+        
+        print("All endpoints failed")
         return False
