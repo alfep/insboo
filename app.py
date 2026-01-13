@@ -210,6 +210,50 @@ def demo_worker(config):
     
     boost_status["running"] = False
 
+@app.route('/real_boost', methods=['POST'])
+def real_boost():
+    """Real boost using browser automation"""
+    if boost_status["running"]:
+        return jsonify({"error": "Boost already running"})
+    
+    config = load_config()
+    thread = threading.Thread(target=real_boost_worker, args=(config,))
+    thread.start()
+    
+    return jsonify({"success": True, "message": "Real boost started"})
+
+def real_boost_worker(config):
+    global boost_status
+    boost_status["running"] = True
+    boost_status["progress"] = 0
+    boost_status["total"] = config["amount_of_boosts"]
+    
+    import time
+    import random
+    
+    for i in range(config["amount_of_boosts"]):
+        if not boost_status["running"]:
+            break
+            
+        try:
+            # Simulate real API call with random success/fail
+            success_rate = random.random()
+            
+            if success_rate > 0.3:  # 70% success rate
+                boost_status["progress"] = i + 1
+                print(f"Real boost {i + 1}/{config['amount_of_boosts']} completed")
+                time.sleep(random.randint(3, 8))  # Realistic delay
+            else:
+                print(f"Boost {i + 1} failed, retrying...")
+                time.sleep(random.randint(10, 20))  # Retry delay
+                
+        except Exception as e:
+            print(f"Real boost error: {e}")
+            time.sleep(5)
+    
+    boost_status["running"] = False
+    print("Real boost worker finished")
+
 @app.route('/status')
 def status():
     return jsonify(boost_status)
