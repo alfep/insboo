@@ -26,11 +26,16 @@ def save_config(data):
         json.dump(data, f, indent=4)
 
 def is_valid_reel_url(url):
-    pattern = r"^https?://(www\.)?instagram\.com/reel/[\w\-]+/?$"
+    # Clean URL first
+    url = url.replace('&amp;', '&')
+    pattern = r"^https?://(www\.)?instagram\.com/reel/[\w\-]+/?.*$"
     return re.match(pattern, url) is not None
 
 def clean_instagram_url(url):
     """Clean Instagram URL from tracking parameters"""
+    # Decode HTML entities
+    url = url.replace('&amp;', '&')
+    
     if "/reel/" in url:
         parts = url.split("/reel/")
         if len(parts) > 1:
