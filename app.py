@@ -17,19 +17,31 @@ service_id = {'views': 237, 'likes': 234}
 def load_config():
     try:
         with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
-    except:
-        return {"video_url": "", "amount_of_boosts": 100, "type": "views"}
+            data = json.load(f)
+            print(f"Config loaded: {data}")  # Debug log
+            return data
+    except Exception as e:
+        print(f"Config load error: {e}")  # Debug log
+        # Create default config
+        default_config = {"video_url": "https://www.instagram.com/reel/DTVOdboiRvC/", "amount_of_boosts": 100, "type": "views"}
+        save_config(default_config)
+        return default_config
 
 def save_config(data):
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(data, f, indent=4)
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Config saved: {data}")  # Debug log
+    except Exception as e:
+        print(f"Config save error: {e}")  # Debug log
 
 def is_valid_reel_url(url):
     # Clean URL first
     url = url.replace('&amp;', '&')
     pattern = r"^https?://(www\.)?instagram\.com/reel/[\w\-]+/?.*$"
-    return re.match(pattern, url) is not None
+    result = re.match(pattern, url) is not None
+    print(f"URL validation: {url} -> {result}")  # Debug log
+    return result
 
 def clean_instagram_url(url):
     """Clean Instagram URL from tracking parameters"""
@@ -102,7 +114,10 @@ def start_boost():
         return jsonify({"error": "Boost already running"})
     
     config = load_config()
-    if not config['video_url'] or not is_valid_reel_url(config['video_url']):
+    print(f"Start boost config: {config}")  # Debug log
+    
+    if not config.get('video_url') or not is_valid_reel_url(config['video_url']):
+        print(f"Invalid URL: {config.get('video_url')}")  # Debug log
         return jsonify({"error": "Please set a valid Instagram Reel URL first"})
     
     thread = threading.Thread(target=boost_worker, args=(config,))

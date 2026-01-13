@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instagram URL Cleaner</title>
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .result { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h2>🔗 Instagram URL Cleaner</h2>
+    <input type="text" id="dirtyUrl" placeholder="Paste Instagram Reel URL here...">
+    <button onclick="cleanUrl()">Clean URL</button>
+    <div id="result" class="result" style="display:none;"></div>
+
+    <script>
+        function cleanUrl() {
+            const input = document.getElementById('dirtyUrl').value;
+            const result = document.getElementById('result');
+            
+            if (!input) {
+                alert('Please paste a URL first!');
+                return;
+            }
+            
+            // Clean URL
+            let cleanedUrl = input.replace(/&amp;/g, '&');
+            
+            if (cleanedUrl.includes('/reel/')) {
+                const parts = cleanedUrl.split('/reel/');
+                if (parts.length > 1) {
+                    const reelId = parts[1].split('/')[0].split('?')[0];
+                    cleanedUrl = `https://www.instagram.com/reel/${reelId}/`;
+                }
+            }
+            
+            result.innerHTML = `<strong>Clean URL:</strong><br>${cleanedUrl}`;
+            result.style.display = 'block';
+            
+            // Auto copy to clipboard
+            navigator.clipboard.writeText(cleanedUrl);
+            alert('Clean URL copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
