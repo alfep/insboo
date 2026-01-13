@@ -6,11 +6,25 @@ class Zefame:
         self.url_video = url_video
         self.url = "https://zefame-free.com/api_free.php?action=order"
         self.uuid = str(uuid.uuid4())
+        
+        # Extract reel ID safely
+        try:
+            url_parts = url_video.split("/")
+            if "reel" in url_parts:
+                reel_index = url_parts.index("reel")
+                post_id = url_parts[reel_index + 1] if reel_index + 1 < len(url_parts) else ""
+            else:
+                post_id = url_parts[4] if len(url_parts) > 4 else ""
+            print(f"Extracted post_id: {post_id} from URL: {url_video}")
+        except Exception as e:
+            print(f"Error extracting post_id: {e}")
+            post_id = ""
+        
         self.data = {
             "service": service_id,
             "link": url_video,
             "uuid": self.uuid,
-            "postId": url_video.split("/")[4]
+            "postId": post_id
         }
         self.headers = {
             "accept": "*/*",
@@ -30,9 +44,17 @@ class Zefame:
 
     def send_boost(self):
         try:
+            print(f"Sending request to: {self.url}")
+            print(f"Data: {self.data}")
+            
             response = self.session.post(self.url, data=self.data, headers=self.headers, timeout=15)
+            print(f"Response status: {response.status_code}")
+            print(f"Response text: {response.text[:500]}")
+            
             if response.status_code == 200:
                 resp_json = response.json()
+                print(f"Response JSON: {resp_json}")
+                
                 if resp_json.get('success') == True:
                     return True
                 elif (
