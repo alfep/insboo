@@ -158,6 +158,58 @@ def test_api():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+@app.route('/test_services', methods=['POST'])
+def test_services():
+    """Test different service IDs"""
+    config = load_config()
+    results = {}
+    
+    # Test different service IDs
+    test_services = {
+        'views_237': 237,
+        'views_238': 238, 
+        'views_239': 239,
+        'likes_234': 234,
+        'likes_235': 235
+    }
+    
+    for name, service_id in test_services.items():
+        try:
+            zefame = Zefame(config["video_url"], service_id)
+            response = zefame.send_boost()
+            results[name] = str(response)
+        except Exception as e:
+            results[name] = f"Error: {str(e)}"
+    
+    return jsonify(results)
+
+@app.route('/demo_boost', methods=['POST'])
+def demo_boost():
+    """Demo boost with fake progress"""
+    if boost_status["running"]:
+        return jsonify({"error": "Boost already running"})
+    
+    config = load_config()
+    thread = threading.Thread(target=demo_worker, args=(config,))
+    thread.start()
+    
+    return jsonify({"success": True, "message": "Demo boost started"})
+
+def demo_worker(config):
+    global boost_status
+    boost_status["running"] = True
+    boost_status["progress"] = 0
+    boost_status["total"] = config["amount_of_boosts"]
+    
+    for i in range(config["amount_of_boosts"]):
+        if not boost_status["running"]:
+            break
+        time.sleep(2)  # Simulate API delay
+        boost_status["progress"] = i + 1
+        print(f"Demo boost {i + 1}/{config['amount_of_boosts']} completed")
+    
+    boost_status["running"] = False
+
 @app.route('/status')
 def status():
     return jsonify(boost_status)
