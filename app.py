@@ -61,20 +61,37 @@ def boost_worker(config):
     boost_status["progress"] = 0
     boost_status["total"] = config["amount_of_boosts"]
     
-    zefame = Zefame(config["video_url"], service_id[config["type"]])
-    used = 0
-    
-    while used < config["amount_of_boosts"] and boost_status["running"]:
-        response = zefame.send_boost()
-        if response == True:
-            used += 1
-            boost_status["progress"] = used
-        elif isinstance(response, int):
-            time.sleep(response)
-        else:
-            time.sleep(delay_types[config["type"]])
+    try:
+        print(f"Starting boost for: {config['video_url']}")
+        zefame = Zefame(config["video_url"], service_id[config["type"]])
+        used = 0
+        
+        while used < config["amount_of_boosts"] and boost_status["running"]:
+            try:
+                print(f"Sending boost {used + 1}/{config['amount_of_boosts']}")
+                response = zefame.send_boost()
+                print(f"Boost response: {response}")
+                
+                if response == True:
+                    used += 1
+                    boost_status["progress"] = used
+                    print(f"Boost {used} successful!")
+                elif isinstance(response, int):
+                    print(f"Rate limited, waiting {response} seconds")
+                    time.sleep(response)
+                else:
+                    print(f"Boost failed, waiting {delay_types[config['type']]} seconds")
+                    time.sleep(delay_types[config["type"]])
+                    
+            except Exception as e:
+                print(f"Boost error: {e}")
+                time.sleep(10)  # Wait before retry
+                
+    except Exception as e:
+        print(f"Worker error: {e}")
     
     boost_status["running"] = False
+    print("Boost worker finished")
 
 @app.route('/health')
 def health():
@@ -129,6 +146,17 @@ def start_boost():
 def stop_boost():
     boost_status["running"] = False
     return jsonify({"success": True})
+
+@app.route('/test_api', methods=['POST'])
+def test_api():
+    """Test Zefame API directly"""
+    try:
+        config = load_config()
+        zefame = Zefame(config["video_url"], service_id[config["type"]])
+        response = zefame.send_boost()
+        return jsonify({"success": True, "response": str(response)})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/status')
 def status():
